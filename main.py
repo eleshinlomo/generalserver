@@ -32,7 +32,7 @@ class ControlRequest(BaseModel):
     ip: str
     command: str
 
-# 🎯 AUDIO FIX: Remapped to stable physical Master Audio hardware keyevents (24/25)
+
 ANDROID_KEY_MAP = {
     "POWER": "26",
     "MUTE": "164",
@@ -40,11 +40,11 @@ ANDROID_KEY_MAP = {
     "DOWN": "20",
     "LEFT": "21",
     "RIGHT": "22",
-    "SELECT": "66",   # The OK / Center button
+    "SELECT": "66",  
     "BACK": "4",
     "HOME": "3",
-    "VOL_UP": "24",   # Corrected master audio baseline 
-    "VOL_DOWN": "25"  # Corrected master audio baseline
+    "VOL_UP": "24",   
+    "VOL_DOWN": "25"  
 }
 
 def load_stored_tvs() -> List[dict]:
@@ -93,7 +93,7 @@ async def control_tv_node(req: ControlRequest):
         device = AdbDeviceTcp(req.ip, 5555, default_transport_timeout_s=6.0)
         device.connect(rsa_keys=[signer], auth_timeout_s=4.0)
         
-        # 🎯 YOUTUBE FIX: Force target standard Fire OS package launcher to initiate activity
+      
         if req.command == "YOUTUBE":
             print(f"📺 LAUNCH APPLICATION: YouTube executing on {req.ip}")
             device.shell("monkey -p com.amazon.firetv.youtube -c android.intent.category.LAUNCHER 1")
