@@ -1,13 +1,32 @@
 # Overview
 This is a general server and it is built with FastAPI
 
-# First app opening, must install all dependencies for app to work
+# IF STARTING SERVER FIRST TIME, YOU MUST RUN STEP 1 -3
+
+## Create python environment Step 1
+python -m venv venv
+
+# Activate environment Step 2
+## for windows
+venv\Scripts\activate
+
+## linux 
 source venv/bin/activate
+
+# Install dependencies Step 3
 pip install -r requirements.txt
 
-# Start app
- <!-- Only run first command if venv is not activated -->
+
+# START SERVER
+ <!-- Only run venv command if venv is not activated else skip to start -->
+ # Activate environment Step 2
+## for windows
+venv\Scripts\activate
+
+## linux 
 source venv/bin/activate
+
+# Start Server
 uvicorn main:app --reload --host 0.0.0.0 --port 8001
 
 
