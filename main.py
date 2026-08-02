@@ -10,7 +10,7 @@ from app.routes.remote import remote_router
 
 
 
-app = FastAPI(root_path='/generalserver/api')
+app = FastAPI(root_path='/api/generalserver')
 app.include_router(remote_router)
 
 
