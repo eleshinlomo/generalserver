@@ -10,7 +10,7 @@ from adb_shell.auth.keygen import keygen
 from adb_shell.adb_device import AdbDeviceTcp
 from adb_shell.auth.sign_pythonrsa import PythonRSASigner
 
-DB_FILE = "shared_tvs.json"
+DB_FILE = "saved_devices.json"
 
 app = FastAPI(title="Smart Home Hub Server")
 
@@ -25,12 +25,16 @@ app.add_middleware(
 
 # Pydantic Schemas (Data Validation)
 class TVDevice(BaseModel):
+    username: str
     name: str
     ip: str
 
 class ControlRequest(BaseModel):
     ip: str
     command: str
+
+class LoadDevicesRequest(BaseModel):
+    username: str
 
 
 ANDROID_KEY_MAP = {
@@ -47,32 +51,69 @@ ANDROID_KEY_MAP = {
     "VOL_DOWN": "25"  
 }
 
-def load_stored_tvs() -> List[dict]:
+
+def load_stored_devices(username: str) -> List[dict]:
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r") as f:
             try:
-                return json.load(f)
+                all_devices = json.load(f)
+                user_devices = [d for d in all_devices if d.get('username') == username]
+                return user_devices
             except json.JSONDecodeError:
                 return []
     return []
 
-def save_stored_tvs(tvs_list: List[dict]):
+
+def save_stored_devices(tvs_list: List[dict]):
     with open(DB_FILE, "w") as f:
         json.dump(tvs_list, f, indent=4)
 
-@app.get("/api/tvs", response_model=List[TVDevice])
-async def get_all_household_tvs():
-    return load_stored_tvs()
 
-@app.post("/api/tvs")
-async def register_new_tv(new_tv: TVDevice):
-    current_tvs = load_stored_tvs()
-    if not any(tv["ip"] == new_tv.ip for tv in current_tvs):
-        current_tvs.append({"name": new_tv.name, "ip": new_tv.ip})
-        save_stored_tvs(current_tvs)
-    return {"status": "success"}
+def removeDevice(ip: str, username: str):
+    devices = load_stored_devices()
+    updated_devices = [d for d in devices if d.get("ip") != ip]
+    save_stored_devices(updated_devices)
+    
+    user_devices = [d for d in updated_devices if d.get("username") == username]
+    return user_devices
 
-@app.post("/api/tv/control")
+
+
+
+
+# Routes
+@app.post("/api/devices", response_model=List[TVDevice])
+async def get_all_devices(req: LoadDevicesRequest):
+    return load_stored_devices(req.username)
+
+
+@app.post("/api/add-device") 
+async def register_new_tv(new_device: TVDevice):
+    # 1. Load ALL global records from the file to check for absolute duplicates
+    global_devices = []
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r") as f:
+            try:
+                global_devices = json.load(f)
+            except json.JSONDecodeError:
+                global_devices = []
+
+    # 2. Check for duplicate IPs globally across the system
+    if not any(device["ip"] == new_device.ip for device in global_devices):
+        global_devices.append({
+            "username": new_device.username, 
+            "name": new_device.name, 
+            "ip": new_device.ip
+        })
+        save_stored_devices(global_devices)
+
+    # 3. Always fetch and return this specific user's updated clean list
+    user_devices = load_stored_devices(new_device.username)
+    return {"status": "success", "data": user_devices}
+
+
+
+@app.post("/api/control")
 async def control_tv_node(req: ControlRequest):
     is_app_shortcut = req.command in ["YOUTUBE"]
     
